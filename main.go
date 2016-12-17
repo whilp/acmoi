@@ -7,9 +7,14 @@ import (
 	"log"
 	"os"
 	"os/exec"
+	"path/filepath"
 	"strconv"
 
 	"9fans.net/go/acme"
+)
+
+var (
+	fOnce = flag.Bool("once", false, "run once")
 )
 
 func main() {
@@ -28,8 +33,45 @@ func inner() error {
 	if err != nil {
 		return err
 	}
+	if *fOnce {
+		return format(name, winid, args)
+	} else {
+		events, err := acme.Log()
+		if err != nil {
+			return err
+		}
+		defer events.Close()
+		for {
+			event, err := events.Read()
+			if err != nil {
+				return err
+			}
+			if event.Op == "put" && event.Name != "" {
+				autoFormat(event.Name, event.ID)
+			}
+		}
+	}
+}
 
-	win, err := acme.Open(winid, nil)
+func autoFormat(name string, id int) error {
+	ext := filepath.Ext(name)
+	formatters := []struct {
+		ext  string
+		args []string
+	}{
+		{".go", []string{"goreturns", "-i"}},
+	}
+
+	for _, formatter := range formatters {
+		if formatter.ext == ext {
+			return format(name, id, formatter.args)
+		}
+	}
+	return nil
+}
+
+func format(name string, id int, args []string) error {
+	win, err := acme.Open(id, nil)
 	if err != nil {
 		return err
 	}
@@ -63,28 +105,53 @@ func inner() error {
 		return err
 	}
 
+	if bytes.Equal(body, result) {
+		return nil
+	}
+	if err := rewrite(win, result); err != nil {
+		return err
+	}
+	if err := show(win, q0, q1); err != nil {
+		return err
+	}
+	if err := put(win); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func rewrite(win *acme.Win, body []byte) error {
+	if _, err := win.Write("ctl", []byte("nomark\n")); err != nil {
+		return err
+	}
+	defer func() { win.Write("ctl", []byte("mark\n")) }()
+
 	if err := win.Addr("0,$"); err != nil {
 		return err
 	}
 
-	if !bytes.Equal(body, result) {
-		_, err := win.Write("data", result)
-		if err != nil {
-			return err
-		}
+	_, err := win.Write("data", body)
+	if err != nil {
+		return err
 
-		if _, err := win.Write("ctl", []byte("put\n")); err != nil {
-			return err
-		}
-
-		if err := win.Addr("#%d,#%d", q0, q1); err != nil {
-			return err
-		}
-
-		if _, err := win.Write("ctl", []byte("dot=addr\nshow\n")); err != nil {
-			return err
-		}
 	}
 
 	return nil
+}
+
+func show(win *acme.Win, q0, q1 int) error {
+	if err := win.Addr("#%d,#%d", q0, q1); err != nil {
+		return err
+	}
+
+	if _, err := win.Write("ctl", []byte("dot=addr\nshow\n")); err != nil {
+		return err
+	}
+	return nil
+}
+
+func put(win *acme.Win) error {
+	_, err := win.Write("ctl", []byte("put\n"))
+	return err
 }
