@@ -26,7 +26,6 @@ func main() {
 
 func inner() error {
 	flag.Parse()
-	args := flag.Args()
 
 	name := os.Getenv("%")
 	winid, err := strconv.Atoi(os.Getenv("winid"))
@@ -34,56 +33,54 @@ func inner() error {
 		return err
 	}
 	if *fOnce {
-		return format(name, winid, args)
-	} else {
-		events, err := acme.Log()
+		return handle(name, winid)
+	}
+
+	events, err := acme.Log()
+	if err != nil {
+		return err
+	}
+	defer events.Close()
+	for {
+		event, err := events.Read()
 		if err != nil {
 			return err
 		}
-		defer events.Close()
-		for {
-			event, err := events.Read()
-			if err != nil {
-				return err
-			}
-			if event.Op == "put" && event.Name != "" {
-				autoFormat(event.Name, event.ID)
-			}
+		if event.Op == "put" && event.Name != "" {
+			handle(event.Name, event.ID)
 		}
 	}
 }
 
-func autoFormat(name string, id int) error {
-	ext := filepath.Ext(name)
-	formatters := []struct {
-		ext  string
-		args []string
-	}{
-		{".go", []string{"goreturns", "-i"}},
-	}
-
-	for _, formatter := range formatters {
-		if formatter.ext == ext {
-			return format(name, id, formatter.args)
-		}
-	}
-	return nil
-}
-
-func format(name string, id int, args []string) error {
+func handle(name string, id int) error {
 	win, err := acme.Open(id, nil)
 	if err != nil {
 		return err
 	}
 	defer win.CloseFiles()
 
+	if err := format(name, win); err != nil {
+		return err
+	}
+
+	if err := check(name, win); err != nil {
+		return err
+	}
+	return nil
+}
+
+func check(name string, win *acme.Win) error {
+	return nil
+}
+
+func format(name string, win *acme.Win) error {
 	body, err := ioutil.ReadFile(name)
 	if err != nil {
 		return err
 	}
 
-	args = append(args, name)
-	cmd := exec.Command(args[0], args[1:]...)
+	// TODO do this from the project root (ie, git toplevel)
+	cmd := exec.Command("acme-format", name)
 	cmd.Stderr = os.Stderr
 
 	result, err := cmd.Output()
@@ -122,10 +119,10 @@ func format(name string, id int, args []string) error {
 }
 
 func rewrite(win *acme.Win, body []byte) error {
-	if _, err := win.Write("ctl", []byte("nomark\n")); err != nil {
-		return err
-	}
-	defer func() { win.Write("ctl", []byte("mark\n")) }()
+	// if _, err := win.Write("ctl", []byte("nomark\n")); err != nil {
+	//	return err
+	//}
+	// defer func() { win.Write("ctl", []byte("mark\n")) }()
 
 	if err := win.Addr("0,$"); err != nil {
 		return err
@@ -154,4 +151,32 @@ func show(win *acme.Win, q0, q1 int) error {
 func put(win *acme.Win) error {
 	_, err := win.Write("ctl", []byte("put\n"))
 	return err
+}
+
+type project struct {
+	root string
+}
+
+func NewProject(path string) *project {
+	r, err := root(path)
+	if err != nil {
+		r = os.Getenv("HOME")
+	}
+	return &project{
+		root: r,
+	}
+}
+
+func root(path string) (string, error) {
+	dir, _ := filepath.Split(path)
+	cmd := exec.Command("git", "rev-parse", "--show-toplevel")
+	cmd.Stderr = os.Stderr
+	cmd.Dir = dir
+	out, err := cmd.Output()
+	if err != nil {
+		out = out[:len(out)-3]
+	}
+	r := string(out)
+	log.Printf("out %v", r)
+	return string(out), err
 }
