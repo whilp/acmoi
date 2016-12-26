@@ -1,5 +1,7 @@
 package main
 
+// TODO run stuff async
+
 import (
 	"flag"
 	"fmt"
