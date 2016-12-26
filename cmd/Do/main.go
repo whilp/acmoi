@@ -133,6 +133,10 @@ func (h *Handler) Handle(name string, id int) error {
 	if err := h.format(name); err != nil {
 		return err
 	}
+	
+	if err := h.check(name); err != nil {
+		return err
+	}
 
 	if err := h.build(name); err != nil {
 		return err
