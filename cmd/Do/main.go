@@ -118,12 +118,14 @@ func handle(name string, id int) error {
 	return handler.Handle(name, id)
 }
 
+// Handler receives acme log events and takes actions in response.
 type Handler struct {
 	win *acme.Win
 	out io.Writer
 	dir string
 }
 
+// NewHandler creates a new handler.
 func NewHandler(out io.Writer, dir string, win *acme.Win) *Handler {
 	return &Handler{
 		win: win,
@@ -132,6 +134,7 @@ func NewHandler(out io.Writer, dir string, win *acme.Win) *Handler {
 	}
 }
 
+// Handle formats, checks, builds, and tests a file that has been modified.
 func (h *Handler) Handle(name string, id int) error {
 	if err := h.format(name); err != nil {
 		return err
@@ -238,10 +241,12 @@ func mountAcme() {
 	fsys, fsysErr = client.MountService("acme")
 }
 
+// Cons is a special file used by acme to log errors.
 type Cons struct {
 	f *client.Fid
 }
 
+// NewCons returns a new cons file.
 func NewCons() (*Cons, error) {
 	fsysOnce.Do(mountAcme)
 	if fsysErr != nil {
@@ -254,18 +259,22 @@ func NewCons() (*Cons, error) {
 	return &Cons{f: f}, nil
 }
 
+// Close closes the cons file.
 func (c *Cons) Close() error {
 	return c.f.Close()
 }
 
+// Write writes a message to the cons file.
 func (c *Cons) Write(b []byte) (int, error) {
 	return c.f.Write(b)
 }
 
+// Errors is a special file associated with each acme window for logging errors.
 type Errors struct {
 	f *client.Fid
 }
 
+// NewErrors returns an errors file.
 func NewErrors(id int) (*Errors, error) {
 	fsysOnce.Do(mountAcme)
 	if fsysErr != nil {
@@ -281,21 +290,30 @@ func NewErrors(id int) (*Errors, error) {
 	return &Errors{f: f}, nil
 }
 
+// Close closes the errors file.
 func (e *Errors) Close() error {
 	return e.f.Close()
 }
 
+// Write writes a message to the errors file.
 func (e *Errors) Write(b []byte) (int, error) {
 	return e.f.Write(b)
 }
 
+// WindowByName finds an open window for the given file name, or creates a new one if no such window is found.
 func WindowByName(name string) (*acme.Win, error) {
 	windows, err := acme.Windows()
 	if err != nil {
 		return nil, err
 	}
+	a, err := filepath.Abs(name)
+	if err != nil {
+		return nil, err
+	}
 	for _, w := range windows {
-		if w.Name == name {
+		b, err := filepath.Abs(w.Name)
+		_ = err // ignore err
+		if a == b {
 			return acme.Open(w.ID, nil)
 		}
 	}
@@ -310,19 +328,27 @@ func WindowByName(name string) (*acme.Win, error) {
 	return win, nil
 }
 
+// WindowID returns the ID for a window that holds the named file.
 func WindowID(name string) (int, error) {
 	windows, err := acme.Windows()
 	if err != nil {
 		return 0, err
 	}
+	a, err := filepath.Abs(name)
+	if err != nil {
+		return 0, err
+	}
 	for _, w := range windows {
-		if w.Name == name {
+		b, err := filepath.Abs(w.Name)
+		_ = err // ignore err here
+		if a == b {
 			return w.ID, nil
 		}
 	}
 	return 0, fmt.Errorf("could not find id for %s", name)
 }
 
+// WindowName returns the name of a file with the given ID.
 func WindowName(id int) (string, error) {
 	windows, err := acme.Windows()
 	if err != nil {
