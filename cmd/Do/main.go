@@ -1,6 +1,7 @@
 package main
 
 // TODO run stuff async
+// TODO ala davidrjenni/A, if invoked as Do, read selection and call out to acme-define (or inspect or something; for go, call guru).
 
 import (
 	"flag"
@@ -77,7 +78,7 @@ func once() error {
 	}
 	defer win.CloseFiles()
 
-	if _, err := win.Write("ctl", []byte("put\n")); err != nil {
+	if err := win.Ctl("put\n"); err != nil {
 		return err
 	}
 
@@ -145,7 +146,6 @@ func (h *Handler) Handle(name string, id int) error {
 	}
 
 	if err := h.test(name); err != nil {
-		log.Printf("an err %s", err)
 		return err
 	}
 	return nil
@@ -183,7 +183,7 @@ func (h *Handler) format(name string) error {
 		return err
 	}
 
-	if _, err := h.win.Write("ctl", []byte("addr=dot\n")); err != nil {
+	if err := h.win.Ctl("addr=dot\n"); err != nil {
 		return err
 	}
 
@@ -192,7 +192,7 @@ func (h *Handler) format(name string) error {
 		return err
 	}
 
-	if _, err := h.win.Write("ctl", []byte("get\n")); err != nil {
+	if err := h.win.Ctl("get\n"); err != nil {
 		return err
 	}
 
@@ -200,7 +200,7 @@ func (h *Handler) format(name string) error {
 		return err
 	}
 
-	if _, err := h.win.Write("ctl", []byte("clean\n")); err != nil {
+	if err := h.win.Ctl("clean\n"); err != nil {
 		return err
 	}
 
@@ -212,7 +212,7 @@ func show(win *acme.Win, q0, q1 int) error {
 		return err
 	}
 
-	if _, err := win.Write("ctl", []byte("dot=addr\nshow\n")); err != nil {
+	if err := win.Ctl("dot=addr\nshow\n"); err != nil {
 		return err
 	}
 	return nil
