@@ -8,8 +8,10 @@ package main
 //  - Watch (runs Handle on put events)
 //  - Grep (runs acme-grep in a project dir)
 //  - Define (runs acme-define) describe?
+//  - Doc
 //  - Test
 //  - Build
+//  - Manifest?
 // TODO shorten names relative to dir w/ filepath.Rel
 
 import (
@@ -93,10 +95,7 @@ func handle(name string, id int) (*Handler, error) {
 		h   *Handler
 	)
 
-	name, err = filepath.Abs(name)
-	if err != nil {
-		return h, err
-	}
+	name = cleanPath(name)
 
 	win, err := acme.Open(id, nil)
 	if err != nil {
@@ -104,7 +103,7 @@ func handle(name string, id int) (*Handler, error) {
 	}
 	defer win.CloseFiles()
 
-	dir := toplevel(name) + "/"
+	dir := cleanPath(toplevel(name)) + "/"
 	_, err = WindowByName(dir)
 	if err != nil {
 		return h, err
@@ -162,10 +161,10 @@ func (h *Handler) Handle() error {
 }
 
 func (h *Handler) run(cmd string, name string, args ...string) *exec.Cmd {
-	// If we can't make name relative to our directory, roll with what we get.
-	n, err := filepath.Rel(h.dir, filepath.Clean(name))
+	name = cleanPath(name)
+	rel, err := filepath.Rel(h.dir, name)
 	if err == nil {
-		name = n
+		name = rel
 	}
 
 	args = append([]string{name}, args...)
@@ -177,6 +176,7 @@ func (h *Handler) run(cmd string, name string, args ...string) *exec.Cmd {
 }
 
 func (h *Handler) define(name string) error {
+
 	pos, _, err := selection(h.win)
 	if err != nil {
 		return err
@@ -229,7 +229,6 @@ func (h *Handler) test(name string) error {
 }
 
 func (h *Handler) format(name string) error {
-	// TODO figure out why format isn't passing short names
 	cmd := h.run("acme-format", name)
 
 	if err := cmd.Run(); err != nil {
@@ -296,10 +295,20 @@ func toplevel(path string) string {
 	return filepath.Clean(strings.Trim(string(out), "\n"))
 }
 
+func cleanPath(path string) string {
+	clean, err := filepath.EvalSymlinks(path)
+	if err != nil {
+		return path
+	}
+	return clean
+}
+
+// Archive stores several files and provides access to them in a format compatible with the go guru. https://godoc.org/golang.org/x/tools/cmd/guru
 type Archive struct {
 	buf *bytes.Buffer
 }
 
+// NewArchive creates a new archive.
 func NewArchive() *Archive {
 	buf := new(bytes.Buffer)
 	return &Archive{buf: buf}
@@ -316,6 +325,7 @@ func (a *Archive) Write(name string, body []byte) error {
 	return nil
 }
 
+// Buffer returns a reader with the formatted contents of the archive.
 func (a *Archive) Buffer() *bytes.Reader {
 	return bytes.NewReader(a.buf.Bytes())
 }
@@ -450,6 +460,7 @@ func WindowName(id int) (string, error) {
 	return "", fmt.Errorf("could not find name for %d", id)
 }
 
+// Ctl is an acme window's ctl file, and provides access to a window's attributes.
 type Ctl struct {
 	ID          int
 	TagSize     int
@@ -460,6 +471,7 @@ type Ctl struct {
 	Name        string
 }
 
+// NewCtl returns a ctl for a window, or an error if the window's ctl cannot be found.
 func NewCtl(win *acme.Win) (*Ctl, error) {
 	c := &Ctl{}
 	ctl, err := win.ReadAll("ctl")
