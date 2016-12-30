@@ -10,4 +10,5 @@ My acme tools.
 - Manifest/acme-manifest (git ls-files)
 - Commit/acme-commit (git commit -v)
 - Add/acme-add (git add -f)
+- Edit (less janky than E)
 - general: shorten files in Errors output relative to Root
