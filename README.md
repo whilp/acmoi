@@ -23,4 +23,5 @@ When invoked without the `-daemon` option, `Do` will run once in the context of 
 - Test/acme-test
 - Build/acme-build
 - Manifest/acme-manifest (git ls-files)
+- Commit/acme-commit (git commit -v)
 - general: shorten files in Errors output relative to Root

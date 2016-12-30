@@ -1,18 +1,7 @@
 package main
 
 // TODO run stuff async
-// TODO ala davidrjenni/A, if invoked as Do, read selection and call out to acme-define (or inspect or something; for go, call guru).
 // TODO Get strategy breaks undo across puts
-// TODO gogetdoc
-// TODO split into commands:
-//  - Watch (runs Handle on put events)
-//  - Grep (runs acme-grep in a project dir)
-//  - Define (runs acme-define) describe?
-//  - Doc
-//  - Test
-//  - Build
-//  - Manifest?
-// TODO shorten names relative to dir w/ filepath.Rel
 
 import (
 	"bytes"
