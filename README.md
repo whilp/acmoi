@@ -4,7 +4,6 @@ My acme tools.
 
 ## TODO
 
-- Grep/acme-grep
 - Doc/acme-doc (with gogetdoc)
 - Test/acme-test
 - Build/acme-build
