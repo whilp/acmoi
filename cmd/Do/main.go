@@ -2,8 +2,18 @@ package main
 
 // TODO run stuff async
 // TODO ala davidrjenni/A, if invoked as Do, read selection and call out to acme-define (or inspect or something; for go, call guru).
+// TODO Get strategy breaks undo across puts
+// TODO gogetdoc
+// TODO split into commands:
+//  - Watch (runs Handle on put events)
+//  - Grep (runs acme-grep in a project dir)
+//  - Define (runs acme-define) describe?
+//  - Test
+//  - Build
+// TODO shorten names relative to dir w/ filepath.Rel
 
 import (
+	"bytes"
 	"flag"
 	"fmt"
 	"io"
@@ -127,11 +137,11 @@ func NewHandler(name string, id int, out io.Writer, dir string, win *acme.Win) *
 		id:   id,
 		win:  win,
 		out:  out,
-		dir:  dir,
+		dir:  filepath.Clean(dir),
 	}
 }
 
-// Handle formats, checks, builds, and tests a file that has been modified.
+// Handle runs format, check, build, and test.
 func (h *Handler) Handle() error {
 	if err := h.format(h.name); err != nil {
 		return err
@@ -151,7 +161,14 @@ func (h *Handler) Handle() error {
 	return nil
 }
 
-func (h *Handler) run(cmd string, args ...string) *exec.Cmd {
+func (h *Handler) run(cmd string, name string, args ...string) *exec.Cmd {
+	// If we can't make name relative to our directory, roll with what we get.
+	n, err := filepath.Rel(h.dir, filepath.Clean(name))
+	if err == nil {
+		name = n
+	}
+
+	args = append([]string{name}, args...)
 	c := exec.Command(cmd, args...)
 	c.Dir = h.dir
 	c.Stderr = h.out
@@ -160,7 +177,43 @@ func (h *Handler) run(cmd string, args ...string) *exec.Cmd {
 }
 
 func (h *Handler) define(name string) error {
-	return h.run("acme-define", name).Run()
+	pos, _, err := selection(h.win)
+	if err != nil {
+		return err
+	}
+
+	a := NewArchive()
+
+	windows, err := acme.Windows()
+	if err != nil {
+		return err
+	}
+
+	for _, wi := range windows {
+		w, err := acme.Open(wi.ID, nil)
+		if err != nil {
+			return err
+		}
+		c, err := NewCtl(w)
+		if err != nil {
+			return err
+		}
+		if c.IsDirectory {
+			continue
+		}
+
+		b, err := w.ReadAll("body")
+		if err != nil {
+			return err
+		}
+		if err := a.Write(c.Name, b); err != nil {
+			return err
+		}
+	}
+
+	cmd := h.run("acme-define", name, strconv.Itoa(pos))
+	cmd.Stdin = a.Buffer()
+	return cmd.Run()
 }
 
 func (h *Handler) check(name string) error {
@@ -176,22 +229,14 @@ func (h *Handler) test(name string) error {
 }
 
 func (h *Handler) format(name string) error {
+	// TODO figure out why format isn't passing short names
 	cmd := h.run("acme-format", name)
 
 	if err := cmd.Run(); err != nil {
 		return err
 	}
 
-	// First addr read is always 0.
-	if _, _, err := h.win.ReadAddr(); err != nil {
-		return err
-	}
-
-	if err := h.win.Ctl("addr=dot\n"); err != nil {
-		return err
-	}
-
-	q0, q1, err := h.win.ReadAddr()
+	q0, q1, err := selection(h.win)
 	if err != nil {
 		return err
 	}
@@ -209,6 +254,24 @@ func (h *Handler) format(name string) error {
 	}
 
 	return nil
+}
+
+func selection(win *acme.Win) (int, int, error) {
+	// First addr read is always 0.
+	if _, _, err := win.ReadAddr(); err != nil {
+		return 0, 0, err
+	}
+
+	if err := win.Ctl("addr=dot\n"); err != nil {
+		return 0, 0, err
+	}
+
+	q0, q1, err := win.ReadAddr()
+	if err != nil {
+		return 0, 0, err
+	}
+
+	return q0, q1, nil
 }
 
 func show(win *acme.Win, q0, q1 int) error {
@@ -230,7 +293,31 @@ func toplevel(path string) string {
 	if err != nil {
 		return dir
 	}
-	return strings.Trim(string(out), "\n")
+	return filepath.Clean(strings.Trim(string(out), "\n"))
+}
+
+type Archive struct {
+	buf *bytes.Buffer
+}
+
+func NewArchive() *Archive {
+	buf := new(bytes.Buffer)
+	return &Archive{buf: buf}
+}
+
+func (a *Archive) Write(name string, body []byte) error {
+	header := fmt.Sprintf("%s\n%d\n", name, len(body))
+	if _, err := a.buf.Write([]byte(header)); err != nil {
+		return err
+	}
+	if _, err := a.buf.Write(body); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (a *Archive) Buffer() *bytes.Reader {
+	return bytes.NewReader(a.buf.Bytes())
 }
 
 // TODO contribute this to acme
@@ -361,4 +448,43 @@ func WindowName(id int) (string, error) {
 		}
 	}
 	return "", fmt.Errorf("could not find name for %d", id)
+}
+
+type Ctl struct {
+	ID          int
+	TagSize     int
+	BodySize    int
+	IsDirectory bool
+	IsModified  bool
+	Tag         string
+	Name        string
+}
+
+func NewCtl(win *acme.Win) (*Ctl, error) {
+	c := &Ctl{}
+	ctl, err := win.ReadAll("ctl")
+	if err != nil {
+		return c, err
+	}
+	fields := strings.Fields(string(ctl))
+
+	if c.ID, err = strconv.Atoi(fields[0]); err != nil {
+		return c, err
+	}
+	if c.TagSize, err = strconv.Atoi(fields[1]); err != nil {
+		return c, err
+	}
+	if c.BodySize, err = strconv.Atoi(fields[2]); err != nil {
+		return c, err
+	}
+	c.IsDirectory = fields[3] == "1"
+	c.IsModified = fields[4] == "1"
+
+	tag, err := win.ReadAll("tag")
+	if err != nil {
+		return c, err
+	}
+	c.Tag = string(tag)
+	c.Name = strings.Fields(c.Tag)[0]
+	return c, nil
 }
