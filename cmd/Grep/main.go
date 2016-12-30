@@ -3,11 +3,8 @@ package main
 import (
 	"flag"
 	"log"
-	"strconv"
 
 	"github.com/whilp/acmoi"
-
-	"9fans.net/go/acme"
 )
 
 func main() {
@@ -35,38 +32,21 @@ func run() error {
 		return err
 	}
 	w.Errors = parent.Errors
-	return define(w)
+	return grep(w)
 }
 
-func define(win *acmoi.Window) error {
-	pos, _, err := win.Selection()
+func grep(win *acmoi.Window) error {
+	from, to, err := win.Selection()
 	if err != nil {
 		return err
 	}
 
-	a := acmoi.NewArchive()
-
-	windows, err := acme.Windows()
+	body, err := win.ReadAll("body")
 	if err != nil {
 		return err
 	}
+	pattern := string(body[from:to])
 
-	for _, wi := range windows {
-		w, err := acmoi.NewWindowFromID(wi.ID)
-		if w.IsDirectory() {
-			continue
-		}
-
-		b, err := w.ReadAll("body")
-		if err != nil {
-			return err
-		}
-		if err := a.Write(w.Ctl.Name(), b); err != nil {
-			return err
-		}
-	}
-
-	cmd := win.Do("acme-define", win.Rel(), strconv.Itoa(pos))
-	cmd.Stdin = a.Buffer()
+	cmd := win.Do("acme-grep", pattern)
 	return cmd.Run()
 }

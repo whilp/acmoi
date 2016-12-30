@@ -55,7 +55,6 @@ func run() error {
 				log.Print(err)
 			}
 			if err := handle(win); err != nil {
-
 				log.Print(err)
 			}
 		}
