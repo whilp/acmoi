@@ -42,7 +42,16 @@ func run() error {
 	log.SetOutput(cons)
 
 	if !*fDaemon {
-		return once()
+		name := os.Getenv("%")
+		winid, err := strconv.Atoi(os.Getenv("winid"))
+		if err != nil {
+			return err
+		}
+		h, err := handle(name, winid)
+		if err != nil {
+			return err
+		}
+		return h.define(name)
 	}
 
 	events, err := acme.Log()
@@ -57,98 +66,86 @@ func run() error {
 			return err
 		}
 		if event.Op == "put" && event.Name != "" {
-			err := handle(event.Name, event.ID)
+			h, err := handle(event.Name, event.ID)
 			if err != nil {
+				log.Print(err)
+			}
+			if err := h.Handle(); err != nil {
 				log.Print(err)
 			}
 		}
 	}
 }
 
-func once() error {
-	name := os.Getenv("%")
-	winid, err := strconv.Atoi(os.Getenv("winid"))
-	if err != nil {
-		return err
-	}
-
-	win, err := acme.Open(winid, nil)
-	if err != nil {
-		return err
-	}
-	defer win.CloseFiles()
-
-	if err := win.Ctl("put\n"); err != nil {
-		return err
-	}
-
-	return handle(name, winid)
-}
-
-func handle(name string, id int) error {
-	var err error
+func handle(name string, id int) (*Handler, error) {
+	var (
+		err error
+		h   *Handler
+	)
 
 	name, err = filepath.Abs(name)
 	if err != nil {
-		return err
+		return h, err
 	}
 
 	win, err := acme.Open(id, nil)
 	if err != nil {
-		return err
+		return h, err
 	}
 	defer win.CloseFiles()
 
 	dir := toplevel(name) + "/"
 	_, err = WindowByName(dir)
 	if err != nil {
-		return err
+		return h, err
 	}
 
 	did, err := WindowID(dir)
 	if err != nil {
-		return err
+		return h, err
 	}
 	e, err := NewErrors(did)
 	if err != nil {
-		log.Print(err)
-		return err
+		return h, err
 	}
-	handler := NewHandler(e, dir, win)
-	return handler.Handle(name, id)
+	return NewHandler(name, id, e, dir, win), nil
 }
 
 // Handler receives acme log events and takes actions in response.
 type Handler struct {
-	win *acme.Win
-	out io.Writer
-	dir string
+	name string
+	id   int
+	win  *acme.Win
+	out  io.Writer
+	dir  string
 }
 
 // NewHandler creates a new handler.
-func NewHandler(out io.Writer, dir string, win *acme.Win) *Handler {
+func NewHandler(name string, id int, out io.Writer, dir string, win *acme.Win) *Handler {
 	return &Handler{
-		win: win,
-		out: out,
-		dir: dir,
+		name: name,
+		id:   id,
+		win:  win,
+		out:  out,
+		dir:  dir,
 	}
 }
 
 // Handle formats, checks, builds, and tests a file that has been modified.
-func (h *Handler) Handle(name string, id int) error {
-	if err := h.format(name); err != nil {
-		return err
-	}
-	
-	if err := h.check(name); err != nil {
+func (h *Handler) Handle() error {
+	if err := h.format(h.name); err != nil {
 		return err
 	}
 
-	if err := h.build(name); err != nil {
+	if err := h.check(h.name); err != nil {
 		return err
 	}
 
-	if err := h.test(name); err != nil {
+	if err := h.build(h.name); err != nil {
+		return err
+	}
+
+	if err := h.test(h.name); err != nil {
 		return err
 	}
 	return nil
@@ -160,6 +157,10 @@ func (h *Handler) run(cmd string, args ...string) *exec.Cmd {
 	c.Stderr = h.out
 	c.Stdout = h.out
 	return c
+}
+
+func (h *Handler) define(name string) error {
+	return h.run("acme-define", name).Run()
 }
 
 func (h *Handler) check(name string) error {
