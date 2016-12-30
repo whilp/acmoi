@@ -66,8 +66,11 @@ func define(win *acmoi.Window) error {
 		}
 	}
 
-	path := win.FromRoot(win.Ctl.Name())
-	cmd := win.Do("acme-define", path, strconv.Itoa(pos))
+	cmd := win.Do("acme-define", win.Rel(), strconv.Itoa(pos))
 	cmd.Stdin = a.Buffer()
 	return cmd.Run()
+}
+
+func rel(win *acmoi.Window) string {
+	return win.FromRoot(win.Ctl.Name())
 }

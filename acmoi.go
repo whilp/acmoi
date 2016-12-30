@@ -103,6 +103,10 @@ func (w *Window) FromRoot(name string) string {
 	return rel
 }
 
+func (w *Window) Rel() string {
+	return w.FromRoot(w.Ctl.Name())
+}
+
 // Selection returns the position of the currently selected text in a window.
 func (w *Window) Selection() (int, int, error) {
 	// First addr read is always 0.
