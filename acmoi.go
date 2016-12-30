@@ -302,7 +302,7 @@ func (c *Ctl) ID() int {
 
 func toplevel(path string) string {
 	dir := filepath.Dir(path)
-	cmd := exec.Command("git", "rev-parse", "--show-toplevel")
+	cmd := exec.Command("acme-root")
 	cmd.Dir = dir
 	out, err := cmd.Output()
 	if err != nil {
