@@ -68,6 +68,8 @@ func wait(id int) error {
 }
 
 func waitevent(name string) error {
+	// TODO this should work, but acme seems to omit del events
+	// for the window we create.
 	events, err := acme.Log()
 	if err != nil {
 		return err
