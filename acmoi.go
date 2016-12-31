@@ -169,68 +169,6 @@ func NewErrors(id int) (*Errors, error) {
 	return &Errors{Fid: f}, nil
 }
 
-// WindowByName finds an open window for the given file name, or creates a new one if no such window is found.
-func WindowByName(name string) (*acme.Win, error) {
-	windows, err := acme.Windows()
-	if err != nil {
-		return nil, err
-	}
-	a, err := filepath.Abs(name)
-	if err != nil {
-		return nil, err
-	}
-	for _, w := range windows {
-		b, err := filepath.Abs(w.Name)
-		_ = err // ignore err
-		if a == b {
-			return acme.Open(w.ID, nil)
-		}
-	}
-
-	win, err := acme.New()
-	if err != nil {
-		return nil, err
-	}
-	if err := win.Name(name); err != nil {
-		return nil, err
-	}
-	return win, nil
-}
-
-// WindowID returns the ID for a window that holds the named file.
-func WindowID(name string) (int, error) {
-	windows, err := acme.Windows()
-	if err != nil {
-		return 0, err
-	}
-	a, err := filepath.Abs(name)
-	if err != nil {
-		return 0, err
-	}
-	for _, w := range windows {
-		b, err := filepath.Abs(w.Name)
-		_ = err // ignore err here
-		if a == b {
-			return w.ID, nil
-		}
-	}
-	return 0, fmt.Errorf("could not find id for %s", name)
-}
-
-// WindowName returns the name of a file with the given ID.
-func WindowName(id int) (string, error) {
-	windows, err := acme.Windows()
-	if err != nil {
-		return "", err
-	}
-	for _, w := range windows {
-		if w.ID == id {
-			return w.Name, nil
-		}
-	}
-	return "", fmt.Errorf("could not find name for %d", id)
-}
-
 // Ctl is an acme window's ctl file, and provides access to a window's attributes.
 type Ctl struct {
 	id          int
