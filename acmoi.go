@@ -92,7 +92,6 @@ func (w *Window) Do(command string, args ...string) *exec.Cmd {
 	cmd.Stderr = w.Errors
 	cmd.Stdout = w.Errors
 	return cmd
-
 }
 
 func (w *Window) FromRoot(name string) string {
@@ -133,7 +132,7 @@ func (w *Window) Selection() (int, int, error) {
 
 // Cons is a special file used by acme to log errors.
 type Cons struct {
-	f *client.Fid
+	*client.Fid
 }
 
 // NewCons returns a new cons file.
@@ -146,22 +145,12 @@ func NewCons() (*Cons, error) {
 	if err != nil {
 		return nil, err
 	}
-	return &Cons{f: f}, nil
-}
-
-// Close closes the cons file.
-func (c *Cons) Close() error {
-	return c.f.Close()
-}
-
-// Write writes a message to the cons file.
-func (c *Cons) Write(b []byte) (int, error) {
-	return c.f.Write(b)
+	return &Cons{Fid: f}, nil
 }
 
 // Errors is a special file associated with each acme window for logging errors.
 type Errors struct {
-	f *client.Fid
+	*client.Fid
 }
 
 // NewErrors returns an errors file.
@@ -177,17 +166,7 @@ func NewErrors(id int) (*Errors, error) {
 		return nil, err
 	}
 
-	return &Errors{f: f}, nil
-}
-
-// Close closes the errors file.
-func (e *Errors) Close() error {
-	return e.f.Close()
-}
-
-// Write writes a message to the errors file.
-func (e *Errors) Write(b []byte) (int, error) {
-	return e.f.Write(b)
+	return &Errors{Fid: f}, nil
 }
 
 // WindowByName finds an open window for the given file name, or creates a new one if no such window is found.
