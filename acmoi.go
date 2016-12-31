@@ -74,7 +74,12 @@ func NewWindowFromName(name string) (*Window, error) {
 			return NewWindowFromID(wi.ID)
 		}
 	}
-	return nil, fmt.Errorf("found no window for name %s", name)
+	w, err := acme.New()
+	if err != nil {
+		return nil, err
+	}
+	w.Name(name)
+	return NewWindow(w)
 }
 
 func (w *Window) Parent() (*Window, error) {
