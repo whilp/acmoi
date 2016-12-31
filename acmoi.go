@@ -41,7 +41,7 @@ func NewWindow(win *acme.Win) (*Window, error) {
 	}
 
 	w.Win = win
-	w.Root = toplevel(w.Ctl.Name())
+	w.Root = toplevel(w.Ctl.Name()) + "/"
 	return w, nil
 }
 
@@ -67,13 +67,13 @@ func NewWindowFromName(name string) (*Window, error) {
 	if err != nil {
 		return nil, err
 	}
-	name = filepath.Clean(name)
 
 	for _, wi := range windows {
-		if filepath.Clean(wi.Name) == name {
+		if wi.Name == name {
 			return NewWindowFromID(wi.ID)
 		}
 	}
+
 	w, err := acme.New()
 	if err != nil {
 		return nil, err
