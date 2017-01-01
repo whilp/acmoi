@@ -1,3 +1,5 @@
+// Copyright 2016 by whilp.
+
 /*
 
 Watch calls various helpers on put events emitted by acme.
