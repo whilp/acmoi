@@ -1,6 +1,8 @@
 /*
 
-Watch calls various helpers on put events emitted by acme. When it sees such an event, it attempts to invoke each of the following external executables until it encounters an error:
+Watch calls various helpers on put events emitted by acme.
+
+When it sees such an event, it attempts to invoke each of the following external executables until it encounters an error:
 
 - `acme-format`
 - `acme-check`
