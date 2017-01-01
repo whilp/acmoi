@@ -1,5 +1,6 @@
 #!/bin/sh
 
 case "$1" in
+	*.md) exec markdownfmt -w "$1";;
 	*.go) exec goreturns -w "$@";;
 esac
