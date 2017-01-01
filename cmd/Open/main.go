@@ -5,7 +5,6 @@ Open creates a new window for a file to be edited.
 While the window is open, Open waits, polling for a change in status. When the window is deleted, Open exits. This makes Open suitable for use as git editor.
 
 */
-
 package main // import "github.com/whilp/acmoi/cmd/Open"
 
 import (
