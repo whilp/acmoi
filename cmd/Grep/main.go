@@ -1,4 +1,12 @@
-package main
+/*
+
+Grep searches for text within a project.
+
+Grep chooses search text based on the selection within the current acme window. It then invokes acme-grep with the search text as its sole argument.
+
+*/
+
+package main // import "github.com/whilp/acmoi/cmd/Grep"
 
 import (
 	"flag"
