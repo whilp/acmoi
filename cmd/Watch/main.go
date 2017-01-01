@@ -51,12 +51,15 @@ func run() error {
 		}
 		if event.Op == "put" && event.Name != "" {
 			win, err := acmoi.NewWindowFromID(event.ID)
-			if err != nil {
-				log.Print(err)
-			}
-			if err := handle(win); err != nil {
-				log.Print(err)
-			}
+			_ = err
+			// if err != nil {
+			//	log.Print(err)
+			// }
+			err = handle(win)
+			_ = err
+			// if err != nil {
+			//	log.Print(err)
+			//}
 		}
 	}
 }
