@@ -5,6 +5,15 @@
 case "$1" in
 	# TODO *.git/ADD_EDIT.patch
 	# TODO *.git/COMMIT_EDITMESSAGE) ;;
+	# TODO xml http://xmlsoft.org/xmllint.html
+	# TODO .c .cpp .java .js .pb http://clang.llvm.org/docs/ClangFormat.html
+	# TODO .py https://github.com/google/yapf
+	# TODO .rb https://github.com/erniebrodeur/ruby-beautify
+	# TODO .rs https://github.com/nrc/rustfmt/
+	# TODO .js .html .css https://github.com/beautify-web/js-beautify
+	# TODO .js http://eslint.org/ http://standardjs.com/
+	# TODO .ts https://github.com/vvakame/typescript-formatter
+	# TODO .html http://tidy.sourceforge.net/docs/tidy_man.html
 	*.md) exec markdownfmt -w "$1";;
 	*.go) exec goreturns -w "$@";;
 esac
