@@ -14,8 +14,6 @@ First, Watch determines the root of the project containing the file that has jus
 */
 package main // import "github.com/whilp/acmoi/cmd/Watch"
 
-// TODO run stuff async
-
 import (
 	"flag"
 	"io/ioutil"
@@ -54,25 +52,22 @@ func run() error {
 		}
 		if event.Op == "put" && event.Name != "" {
 			win, err := acmoi.NewWindowFromID(event.ID)
-			_ = err
-			// if err != nil {
-			//	log.Print(err)
-			// }
-			err = handle(win)
-			_ = err
-			// if err != nil {
-			//	log.Print(err)
-			//}
+			if err != nil {
+				log.Print(err)
+			}
+			go handle(win)
 		}
 	}
 }
 
 func handle(win *acmoi.Window) error {
+	defer win.CloseFiles()
 	parent, err := win.Parent()
 	if err != nil {
 		return err
 	}
 	win.Errors = parent.Errors
+	defer parent.CloseFiles()
 
 	if err := format(win); err != nil {
 		return err
