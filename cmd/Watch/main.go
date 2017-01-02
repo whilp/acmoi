@@ -15,6 +15,7 @@ First, Watch determines the root of the project containing the file that has jus
 package main // import "github.com/whilp/acmoi/cmd/Watch"
 
 import (
+	"bytes"
 	"flag"
 	"io/ioutil"
 	"log"
@@ -100,14 +101,23 @@ func test(win *acmoi.Window) error {
 }
 
 func format(win *acmoi.Window) error {
+	before, err := ioutil.ReadFile(win.Ctl.Name())
+	if err != nil {
+		return err
+	}
+
 	cmd := win.Do("acme-format", win.Rel())
 	if err := cmd.Run(); err != nil {
 		return err
 	}
 
-	body, err := ioutil.ReadFile(win.Ctl.Name())
+	after, err := ioutil.ReadFile(win.Ctl.Name())
 	if err != nil {
 		return err
+	}
+
+	if bytes.Equal(before, after) {
+		return nil
 	}
 
 	q0, q1, err := win.Selection()
@@ -117,7 +127,7 @@ func format(win *acmoi.Window) error {
 
 	w := &winderr{Window: win}
 	w.addr("0,$")
-	w.write("data", body)
+	w.write("data", after)
 	w.addr("#%d,#%d", q0, q1)
 	w.ctl("dot=addr\nshow\n")
 	w.ctl("clean\n")
