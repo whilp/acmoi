@@ -83,7 +83,8 @@ func NewWindowFromName(name string) (*Window, error) {
 }
 
 func (w *Window) Parent() (*Window, error) {
-	return NewWindowFromName(w.Root)
+	name := filepath.Join(w.Root, ".guide")
+	return NewWindowFromName(name)
 }
 
 func (w *Window) Do(command string, args ...string) *exec.Cmd {
