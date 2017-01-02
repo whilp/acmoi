@@ -23,13 +23,18 @@ func mountAcme() {
 	fsys, fsysErr = client.MountService("acme")
 }
 
+// Window wraps acme.Win.
 type Window struct {
 	*acme.Win
 	*Ctl
 	Errors *Errors
-	Root   string
+
+	// The root of the project that contains the file or directory being
+	// edited by the window.
+	Root string
 }
 
+// NewWindow creates a new Window, wrapping an existing acme.Win. Each Window is associated with a Ctl and Errors. The Root for the Window is determined by calling acme-root in the directory that contains the file or directory shown in the window.
 func NewWindow(win *acme.Win) (*Window, error) {
 	w := &Window{}
 	var err error
@@ -45,6 +50,7 @@ func NewWindow(win *acme.Win) (*Window, error) {
 	return w, nil
 }
 
+// NewWindowFromEnviron creates a new Window based on the winid environment variable. If acme does not know about a window with this ID, error will be set.
 func NewWindowFromEnviron() (*Window, error) {
 	winid, err := strconv.Atoi(os.Getenv("winid"))
 	if err != nil {
@@ -53,6 +59,7 @@ func NewWindowFromEnviron() (*Window, error) {
 	return NewWindowFromID(winid)
 }
 
+// NewWindowFromID creates a new Window given a window ID. If acme does not know about a window with this ID, error will be set.
 func NewWindowFromID(id int) (*Window, error) {
 	win, err := acme.Open(id, nil)
 	if err != nil {
@@ -62,7 +69,8 @@ func NewWindowFromID(id int) (*Window, error) {
 	return NewWindow(win)
 }
 
-func NewWindowFromName(name string) (*Window, error) {
+// NewWindowFromName creates a new Window given the name of the file or directory shown in that window. If acme does not know about a window with this name, error will be set unless create is true. If create is true, a new window will be created in acme and returned.
+func NewWindowFromName(name string, create bool) (*Window, error) {
 	windows, err := acme.Windows()
 	if err != nil {
 		return nil, err
@@ -74,19 +82,24 @@ func NewWindowFromName(name string) (*Window, error) {
 		}
 	}
 
-	w, err := acme.New()
-	if err != nil {
-		return nil, err
+	if create {
+		w, err := acme.New()
+		if err != nil {
+			return nil, err
+		}
+		w.Name(name)
+		return NewWindow(w)
 	}
-	w.Name(name)
-	return NewWindow(w)
+	return nil, fmt.Errorf("window for name does not exist: %s", name)
 }
 
+// Parent finds the window showing the .guide file at the root of the project. The root is typically determined by acme-root (see NewWindow).
 func (w *Window) Parent() (*Window, error) {
 	name := filepath.Join(w.Root, ".guide")
-	return NewWindowFromName(name)
+	return NewWindowFromName(name, true)
 }
 
+// Do runs a command in the root directory of the project. The commands output is routed to the window's Errors file for display in acme.
 func (w *Window) Do(command string, args ...string) *exec.Cmd {
 	cmd := exec.Command(command, args...)
 	cmd.Dir = w.Root
@@ -95,6 +108,7 @@ func (w *Window) Do(command string, args ...string) *exec.Cmd {
 	return cmd
 }
 
+// FromRoot returns a path to a file relative to the project's root directory.
 func (w *Window) FromRoot(name string) string {
 	clean, err := filepath.EvalSymlinks(name)
 	if err == nil {
@@ -108,6 +122,7 @@ func (w *Window) FromRoot(name string) string {
 	return rel
 }
 
+// Rel returns the window's name relative to the project's root directory.
 func (w *Window) Rel() string {
 	return w.FromRoot(w.Ctl.Name())
 }
@@ -211,14 +226,17 @@ func NewCtl(win *acme.Win) (*Ctl, error) {
 	return c, nil
 }
 
+// IsDirectory returns true if the isdirectory field for this ctl's window is set to 1.
 func (c *Ctl) IsDirectory() bool {
 	return c.isdirectory
 }
 
+// Name returns the name of this ctl's window.
 func (c *Ctl) Name() string {
 	return c.name
 }
 
+// ID returns the ID of this ctl's window.
 func (c *Ctl) ID() int {
 	return c.id
 }

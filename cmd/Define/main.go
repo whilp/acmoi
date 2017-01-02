@@ -4,6 +4,10 @@ Define prints basic information about currently selected syntax.
 
 Define determines its input based on the selection in the acme window in which it is invoked. It then calls the acme-define executable, passing an archive formatted for the go guru tool on stdin. The archive contains all open acme buffers, with each entry consisting of the file name, a newline, the file size, another newline, and the contents of the file.
 
+The input format is documented here:
+
+https://godoc.org/golang.org/x/tools/cmd/guru
+
 */
 package main // import "github.com/whilp/acmoi/cmd/Define"
 

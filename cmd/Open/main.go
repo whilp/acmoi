@@ -2,14 +2,13 @@
 
 Open creates a new window for a file to be edited.
 
-While the window is open, Open waits, polling for a change in status. When the window is deleted, Open exits. This makes Open suitable for use as git editor.
+While the window is open, Open waits, polling for a change in status. When the window is deleted, Open exits. This makes Open suitable for use as a git editor.
 
 */
 package main // import "github.com/whilp/acmoi/cmd/Open"
 
 import (
 	"flag"
-	"fmt"
 	"log"
 	"os"
 	"path/filepath"
@@ -42,7 +41,7 @@ func run() error {
 		return err
 	}
 
-	win, err := acmoi.NewWindowFromName(name)
+	win, err := acmoi.NewWindowFromName(name, true)
 	if err != nil {
 		return err
 	}
@@ -71,7 +70,6 @@ func wait(id int) error {
 		}
 		time.Sleep(200 * time.Millisecond)
 	}
-	return fmt.Errorf("missed del for winid %d", id)
 }
 
 func waitevent(name string) error {
@@ -97,5 +95,4 @@ func waitevent(name string) error {
 			return nil
 		}
 	}
-	return fmt.Errorf("missed del for %s", name)
 }
