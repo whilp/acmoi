@@ -14,6 +14,20 @@ To catch them all:
 go get -u github.com/whilp/acmoi/...
 ```
 
+The tools here do as little as possible to interact with acme before delegating work to external commands. Examples for these commands can be found in the `scripts/` directory:
+
+```
+scripts/acme-build
+scripts/acme-check
+scripts/acme-define
+scripts/acme-format
+scripts/acme-grep
+scripts/acme-root
+scripts/acme-test
+```
+
+These commands are typically invoked with the full path to a file as the first argument, so it is possible to switch behavior based on the file extension or other indicator. For example, `acme-format` runs [markdownfmt](https://github.com/shurcooL/markdownfmt) for files that end in `.md` and `go fmt` for files that end in `.go`.
+
 TODO
 ----
 
