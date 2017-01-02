@@ -15,10 +15,10 @@ First, Watch determines the root of the project containing the file that has jus
 package main // import "github.com/whilp/acmoi/cmd/Watch"
 
 // TODO run stuff async
-// TODO Get strategy breaks undo across puts
 
 import (
 	"flag"
+	"io/ioutil"
 	"log"
 
 	"9fans.net/go/acme"
@@ -110,33 +110,48 @@ func format(win *acmoi.Window) error {
 		return err
 	}
 
+	body, err := ioutil.ReadFile(win.Ctl.Name())
+	if err != nil {
+		return err
+	}
+
 	q0, q1, err := win.Selection()
 	if err != nil {
 		return err
 	}
 
-	if err := win.Win.Ctl("get\n"); err != nil {
-		return err
-	}
+	w := &winderr{Window: win}
+	w.addr("0,$")
+	w.write("data", body)
+	w.addr("#%d,#%d", q0, q1)
+	w.ctl("dot=addr\nshow\n")
+	w.ctl("clean\n")
 
-	if err := show(win, q0, q1); err != nil {
-		return err
-	}
-
-	if err := win.Win.Ctl("clean\n"); err != nil {
-		return err
-	}
-
-	return nil
+	return w.err
 }
 
-func show(win *acmoi.Window, q0, q1 int) error {
-	if err := win.Addr("#%d,#%d", q0, q1); err != nil {
-		return err
-	}
+type winderr struct {
+	*acmoi.Window
+	err error
+}
 
-	if err := win.Win.Ctl("dot=addr\nshow\n"); err != nil {
-		return err
+func (w *winderr) addr(format string, args ...interface{}) {
+	if w.err != nil {
+		return
 	}
-	return nil
+	w.err = w.Addr(format, args...)
+}
+
+func (w *winderr) ctl(format string, args ...interface{}) {
+	if w.err != nil {
+		return
+	}
+	w.err = w.Win.Ctl(format, args...)
+}
+
+func (w *winderr) write(file string, b []byte) {
+	if w.err != nil {
+		return
+	}
+	_, w.err = w.Write(file, b)
 }
