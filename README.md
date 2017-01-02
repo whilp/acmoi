@@ -8,6 +8,12 @@ My acme tools. General documentation on [godoc](https://godoc.org/github.com/whi
 -	[Grep](https://godoc.org/github.com/whilp/acmoi/cmd/Grep)
 -	[Watch](https://godoc.org/github.com/whilp/acmoi/cmd/Watch)
 
+To catch them all:
+
+```bash
+go get -u github.com/whilp/acmoi/...
+```
+
 TODO
 ----
 
