@@ -64,7 +64,12 @@ func touch(name string) error {
 
 func wait(id int) error {
 	for {
-		_, err := acmoi.NewWindowFromID(id)
+		// Use acme.Open directly to reduce the likelihood of
+		// panics. acmoi.Window helpfully creates the ctl and
+		// errors structs, which requires a few extra reads and
+		// increases the chance that such a read happens on an
+		// invalid ID.
+		_, err := acme.Open(id, nil)
 		if err != nil {
 			return nil
 		}
