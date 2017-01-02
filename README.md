@@ -28,6 +28,8 @@ scripts/acme-test
 
 These commands are typically invoked with the full path to a file as the first argument, so it is possible to switch behavior based on the file extension or other indicator. For example, `acme-format` runs [markdownfmt](https://github.com/shurcooL/markdownfmt) for files that end in `.md` and `go fmt` for files that end in `.go`.
 
+Most of the tools rely on the concept of a project. Each acme window contains either a file or a directory with a name; that name is a path, and that path is expected to exist within some project structure (typically a git repository). The `acme-root` command is invoked in the parent directory of the window's path and should return a path containing the window's name. Other commands are usually run from that root; within acme, output is usually routed to an `+Errors` file opened for a `.guide` file at the project's root. This collects all output from commands run on files within a project in a single window. The `.guide` file can be used to store notes; the output of `git ls-files` for easy access; 'bookmarks' using acme's search addresses (`README.md:/TODO`); or handy commands (`git add -e`, `acme-grep TODO`).
+
 TODO
 ----
 
