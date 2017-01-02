@@ -3,6 +3,8 @@
 # TODO format/wrap comments in everything
 
 case "$1" in
+	# TODO github (README.md, CONTRIBUTING.md, AUTHORS, LICENSE)
+	# TODO * add a license header (acme-license -license bsd -date 2017 -authors AUTHORS)
 	# TODO *.git/ADD_EDIT.patch
 	# TODO *.git/COMMIT_EDITMESSAGE) ;;
 	# TODO xml http://xmlsoft.org/xmllint.html
