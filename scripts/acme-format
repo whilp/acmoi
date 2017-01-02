@@ -1,5 +1,7 @@
 #!/bin/sh
 
+# TODO format/wrap comments in everything
+
 case "$1" in
 	# TODO *.git/ADD_EDIT.patch
 	# TODO *.git/COMMIT_EDITMESSAGE) ;;
