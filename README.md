@@ -17,6 +17,7 @@ go get -u github.com/whilp/acmoi/...
 TODO
 ----
 
+-	make 2-1 chording work on OSX ([this](https://groups.google.com/forum/#!topic/comp.os.plan9/aEwQNcr80cQ) doesn't yet seem to do the trick)
 -	Doc/acme-doc (with gogetdoc)
 -	Test/acme-test
 -	Build/acme-build
