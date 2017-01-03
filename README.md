@@ -34,6 +34,7 @@ TODO
 ----
 
 -	make 2-1 chording work on OSX ([this](https://groups.google.com/forum/#!topic/comp.os.plan9/aEwQNcr80cQ) doesn't yet seem to do the trick)
+-	github stuff (hub)
 -	Diff (include plumber-compatible line numbers in git diff output)
 -	Doc/acme-doc (with gogetdoc, godef)
 -	Test/acme-test
@@ -42,4 +43,3 @@ TODO
 -	Commit/acme-commit (git commit -v, w/ diff line numbers, perhaps separate windows for message and diff)
 -	Add/acme-add (git add -f)
 -	scripts/acme-* support for other formats/languages
--	general: shorten files in Errors output relative to Root
