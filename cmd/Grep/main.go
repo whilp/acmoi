@@ -43,17 +43,32 @@ func run() error {
 }
 
 func grep(win *acmoi.Window) error {
+	var (
+		pattern string
+		err     error
+	)
+	pattern = flag.Arg(0)
+	if pattern == "" {
+		pattern, err = readPattern(win)
+		if err != nil {
+			return err
+		}
+	}
+
+	cmd := win.Do("acme-grep", pattern)
+	return cmd.Run()
+}
+
+func readPattern(win *acmoi.Window) (string, error) {
 	from, to, err := win.Selection()
 	if err != nil {
-		return err
+		return "", err
 	}
 
 	body, err := win.ReadAll("body")
 	if err != nil {
-		return err
+		return "", err
 	}
 	pattern := string(body[from:to])
-
-	cmd := win.Do("acme-grep", pattern)
-	return cmd.Run()
+	return pattern, nil
 }
