@@ -126,8 +126,7 @@ func format(win *acmoi.Window) error {
 	}
 
 	w := &winderr{Window: win}
-	w.addr("0,$")
-	w.write("data", after)
+	w.ctl("get\n")
 	w.addr("#%d,#%d", q0, q1)
 	w.ctl("dot=addr\nshow\n")
 	w.ctl("clean\n")
