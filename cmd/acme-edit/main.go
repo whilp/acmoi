@@ -1,11 +1,11 @@
 /*
 
-Open creates a new window for a file to be edited.
+acme-edit creates a new window for a file to be edited.
 
-While the window is open, Open waits, polling for a change in status. When the window is deleted, Open exits. This makes Open suitable for use as a git editor.
+While the window is open, acme-edit waits, polling for a change in status. When the window is deleted, acme-edit exits. This makes acme-edit suitable for use as a git editor.
 
 */
-package main // import "github.com/whilp/acmoi/cmd/Open"
+package main // import "github.com/whilp/acmoi/cmd/acme-edit"
 
 import (
 	"flag"
