@@ -20,5 +20,5 @@ case "$1" in
 	#*.html) exec js-beautify -jnr "$1";;
 	*.js) exec clang-format -i -style=Google "$1";;
 	*.md) exec markdownfmt -w "$1";;
-	*.go) exec goreturns -w "$@";;
+	*.go) exec goreturns -w "$1";;
 esac
