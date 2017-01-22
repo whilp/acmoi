@@ -60,6 +60,9 @@ func run() error {
 
 func handle(win *acmoi.Window) error {
 	defer win.CloseFiles()
+	if ignore(win) {
+		return nil
+	}
 	parent, err := win.Parent()
 	if err != nil {
 		return err
@@ -129,6 +132,17 @@ func format(win *acmoi.Window) error {
 	w.ctl("clean\n")
 
 	return w.err
+}
+
+func ignore(win *acmoi.Window) bool {
+	tag, err := win.ReadAll("tag")
+	if err != nil {
+		return true
+	}
+	if bytes.Contains(tag, []byte("!Watch")) {
+		return true
+	}
+	return false
 }
 
 type winderr struct {
