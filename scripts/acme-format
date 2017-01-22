@@ -18,7 +18,7 @@ case "$1" in
 	# TODO .html http://tidy.sourceforge.net/docs/tidy_man.html
 	#*.css) exec js-beautifu -jnr "$1";;
 	#*.html) exec js-beautify -jnr "$1";;
-	*.js) exec clang-format -i -style=Google "$1";;
+	*.js) exec standard --fix "$1";;
 	*.md) exec markdownfmt -w "$1";;
 	*.go) exec goreturns -w "$1";;
 esac
