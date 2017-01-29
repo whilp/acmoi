@@ -16,6 +16,8 @@ import (
 	"flag"
 	"io/ioutil"
 	"log"
+	"os"
+	"time"
 
 	"9fans.net/go/acme"
 	"github.com/whilp/acmoi"
@@ -101,23 +103,35 @@ func test(win *acmoi.Window) error {
 }
 
 func format(win *acmoi.Window) error {
-	before, err := ioutil.ReadFile(win.Ctl.Name())
+	name := win.Ctl.Name()
+	before, err := ioutil.ReadFile(name)
 	if err != nil {
 		return err
 	}
+
+	stat, err := os.Stat(name)
+	if err != nil {
+		return err
+	}
+	mtime := stat.ModTime()
 
 	cmd := win.Do("acme-format", win.Rel())
 	if err := cmd.Run(); err != nil {
 		return err
 	}
 
-	after, err := ioutil.ReadFile(win.Ctl.Name())
+	after, err := ioutil.ReadFile(name)
 	if err != nil {
 		return err
 	}
 
 	if bytes.Equal(before, after) {
 		return nil
+	}
+
+	err = os.Chtimes(name, time.Time{}, mtime)
+	if err != nil {
+		return err
 	}
 
 	q0, q1, err := win.Selection()
