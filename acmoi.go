@@ -105,6 +105,7 @@ func (w *Window) Do(command string, args ...string) *exec.Cmd {
 	cmd.Dir = w.Root
 	cmd.Stderr = w.Errors
 	cmd.Stdout = w.Errors
+	cmd.Env = os.Environ()
 	return cmd
 }
 

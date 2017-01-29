@@ -116,6 +116,7 @@ func format(win *acmoi.Window) error {
 	mtime := stat.ModTime()
 
 	cmd := win.Do("acme-format", win.Rel())
+	cmd.Env = append(cmd.Env, "shebang="+string(shebang(before)))
 	if err := cmd.Run(); err != nil {
 		return err
 	}
@@ -183,4 +184,16 @@ func (w *winderr) write(file string, b []byte) {
 		return
 	}
 	_, w.err = w.Write(file, b)
+}
+
+func shebang(header []byte) []byte {
+	var bang []byte
+	if !bytes.HasPrefix(header, []byte("#!")) {
+		return bang
+	}
+	i := bytes.Index(header, []byte("\n"))
+	if i < 0 {
+		return bang
+	}
+	return header[2:i]
 }
