@@ -2,7 +2,13 @@
 
 # TODO format/wrap comments in everything
 
-case "$1" in
+path="$1"
+
+case "$shebang" in
+	*python*) path=".py";;
+esac
+
+case "$path" in
 	# TODO github (README.md, CONTRIBUTING.md, AUTHORS, LICENSE)
 	# TODO * add a license header (acme-license -license bsd -date 2017 -authors AUTHORS)
 	# TODO *.git/ADD_EDIT.patch
@@ -20,8 +26,8 @@ case "$1" in
 	#*.html) exec js-beautify -jnr "$1";;
 	*.yaml) 
 		python -m pyaml < "$1" > "$1".acme-format \
-		&& mv "$1".acme-format "$1";;
-	*.py) exec yapf -i "$1";;
+		&& tee "$1" < "$1".acme-format > /dev/null;;
+	*.py) exec acme-format-py "$1";;
 	*.js) exec standard --fix "$1";;
 	*.md) exec markdownfmt -w "$1";;
 	*.go) exec goreturns -w "$1";;

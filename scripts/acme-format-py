@@ -1,0 +1,8 @@
+#!/usr/bin/env python
+
+import yapf
+
+try:
+    yapf.FormatFiles(sys.argv[1:], lines, style_config='pep8', in_place=True)
+except SyntaxError, e:
+    print "{e.filename}:{e.lineno}:{e.offset} {e.msg}".format(e=e)
